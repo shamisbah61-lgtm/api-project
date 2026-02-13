@@ -9,6 +9,7 @@ from user.models import User
 from customer.models import Product
 from .serializers import ProductSerializer
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
@@ -159,26 +160,17 @@ def product(request):
     }
     return Response(response_data)
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_product(request):
-    name =request.data.get("name")
+    serializer = ProductSerializer(data=request.data)
 
-    product = Product.objects.create(
-        user = request.user,
-        name=name
-    )
+    if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=201)
 
-    serializer = ProductSerializer(
-        product,
-        context={"request": request}
-    )
-    return Response({
-        "status_code": 201,
-        "status": "success",
-        "message": "product added successfully",
-        "data": serializer.data
-    })
+    return Response(serializer.errors, status=400)
+
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_product(request, id):
